@@ -178,7 +178,7 @@ class GameSocket{
                         console.log('admin count 2', this.adminsList[gameId].length)
                     }else{
                         console.log('user count 1', this.usersList[gameId].length)
-                        this.usersList[gameId] = this.usersList[gameId].filter(u=>u.userId !== user)
+                        this.usersList[gameId] = this.usersList[gameId].filter(u=>u.id !== user)
                         console.log('user count 2', this.usersList[gameId].length)
                     }
                     // if (game)

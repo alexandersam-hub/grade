@@ -79,7 +79,9 @@ class GameSocket{
                                 if(! this.adminsList[gameId])
                                     this.adminsList[gameId] = []
                                 const grades = await GradeService.getGradeByGameId(gameId)
-                                this.adminsList[gameId].push({gameId, ws})
+                                user =this.adminsList[gameId].length
+                                this.adminsList[gameId].push({gameId, ws, userId: user})
+
                                 return this.sendMessage(ws, {
                                     warning:false,
                                     action: 'login',grades,
@@ -170,6 +172,13 @@ class GameSocket{
                             break
                     }})
                 ws.on('close', ()=> {
+                    if (role === 'admin'){
+                        this.adminsList[gameId] =  this.adminsList[gameId].filter(l=>l.userId !== user)
+                        console.log('user count', this.adminsList[gameId].length)
+                    }else{
+                        this.usersList[gameId] = this.usersList[gameId].filter(u=>u.userId !== user)
+                        console.log('admin count', this.usersList[gameId].length)
+                    }
                     // if (game)
                         // if (user.role === 'admin')
                         //     this.currentGame[game].adminsSockets = this.currentGame[game].adminsSockets.filter(u=>u.user.id!==user.id)

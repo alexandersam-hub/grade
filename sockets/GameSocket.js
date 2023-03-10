@@ -173,13 +173,9 @@ class GameSocket{
                     }})
                 ws.on('close', ()=> {
                     if (role === 'admin'){
-                        console.log('admin count 1', this.adminsList[gameId].length)
                         this.adminsList[gameId] =  this.adminsList[gameId].filter(l=>l.userId !== user)
-                        console.log('admin count 2', this.adminsList[gameId].length)
                     }else{
-                        console.log('user count 1', this.usersList[gameId].length)
                         this.usersList[gameId] = this.usersList[gameId].filter(u=>u.id !== user)
-                        console.log('user count 2', this.usersList[gameId].length)
                     }
                     // if (game)
                         // if (user.role === 'admin')

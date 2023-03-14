@@ -48,10 +48,9 @@ class GameSocket{
                                 const progress = await ProgressService.getGameProgress(gameId)
                                 if(progress) {
                                     this.games[gameId].process = progress
-                                    this.games[gameId].process.count = 0
                                 }
                                 else
-                                    this.games[gameId].process = {location:0, game:gameId, countAnswer:0}
+                                    this.games[gameId].process = {location:0, game:gameId}
                             }
                             if (!messageData.token){
                                 role='user'
@@ -91,7 +90,7 @@ class GameSocket{
                                 // return ws.send(JSON.stringify({warning: true, action: 'login', message: 'bad token'}))
 
                         case 'putGrade':
-                            await GradeService.gradePut(messageData.grade, gameId, this.games[gameId].locations[this.games[gameId].process.location],this.games[gameId].process.location, user)
+                            await GradeService.gradePut(messageData.grade, gameId, this.games[gameId].locations[this.games[gameId].process.location],this.games[gameId].process.location,messageData.question, user)
                             this.games[gameId].process.count++
                             if (this.adminsList[gameId]) {
                                 const grades = await GradeService.getGradeByGameId(gameId)
@@ -102,7 +101,12 @@ class GameSocket{
                                     game: this.games[gameId]
                                 }))
                             }
+                            const currentLocation = this.games[gameId].locations[this.games[gameId].process.location]
+                            const lastAnswerByLocation = await GradeService.getGradeUserByLocation(gameId, this.games[gameId].process.location, user)
+
                             return this.sendMessage(ws, {warning:false,
+                                answer:lastAnswerByLocation,
+                                location:currentLocation,
                                 gameName:this.games[gameId].name, action: 'reportPutGrade'})
 
                         case 'nextAnswer':

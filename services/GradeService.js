@@ -41,7 +41,7 @@ class GradeService{
             if (!gradeDb)
                 return null
             const userGrade = gradeDb.grades[userId]
-            const gradeByLocation = userGrade.filter(loc => loc.localId === localId)[0]
+            const gradeByLocation = userGrade.filter(loc => loc.localId === localId)
             return gradeByLocation
         }catch (e){
             return null
@@ -57,13 +57,13 @@ class GradeService{
         }
     }
 
-    async gradePut(grade, gameId, textAnswer, localId, userId){
+    async gradePut(grade, gameId, textQuestion, localId, questionId, userId){
         // try {
             const gradeDb = await GradeModel.findOne({game:gameId})
             if(gradeDb){
                 if(!gradeDb.grades[userId])
                     gradeDb.grades[userId] = []
-                gradeDb.grades[userId].push({localId, textAnswer, grade, date:Date.now()})
+                gradeDb.grades[userId].push({localId, question:questionId, textQuestion, grade, date:Date.now()})
                 await GradeModel.findOneAndUpdate(gradeDb.id, gradeDb)
             }else{
                 // const newGrade = {}
@@ -71,7 +71,7 @@ class GradeService{
                 // newGrade[gameId][userId] = {}
                 // newGrade[gameId][userId][local] = grade
                 const newGrade = {}
-                newGrade[userId] = [{localId, textAnswer, grade, date:Date.now()}]
+                newGrade[userId] = [{localId, question:questionId, textQuestion, grade, date:Date.now()}]
                 await GradeModel.create({game:gameId, grades:newGrade})
             }
             return true

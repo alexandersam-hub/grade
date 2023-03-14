@@ -4,6 +4,7 @@ class GameProgressDto{
     id
     game
     location
+    question
     count
 
     constructor(model) {

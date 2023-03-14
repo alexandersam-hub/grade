@@ -8,6 +8,7 @@ class GameController{
     async createGame(req,res){
         try{
             const {game} = req.body
+
             if(game){
                 const result = await GameService.createGame(game)
                 return res.json(result)

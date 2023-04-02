@@ -2,12 +2,19 @@ const UserInfoModel = require('../../models/UserInfoModel')
 
 class UserInfoService{
     async getInfo(userId){
-        const user = await UserInfoModel.findOne({user:userId})
-        return {age:user.age, gender:user.gender }
-    } catch (e){
+        try{
+            const user = await UserInfoModel.findOne({user:userId})
+            if (user)
+                return {age:user.age, gender:user.gender }
+            else
+                return null
+        }
+
+     catch (e){
         console.log(e)
         return null
     }
+}
 
     async isUserInfo(userId){
         try{

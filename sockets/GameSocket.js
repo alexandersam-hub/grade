@@ -84,7 +84,7 @@ class GameSocket{
                                     this.adminsList[gameId] = []
                                 const grades = await GradeService.getGradeByGameId(gameId)
                                 const userInfo = {}
-                                if(this.games[gameId].isUserInfo &&  grades.grades)
+                                if(grades && this.games[gameId].isUserInfo &&  grades.grades)
                                     for (const grade in grades.grades) {
                                         userInfo[grade] = await UserInfoService.getInfo(grade)
                                     }
@@ -106,7 +106,7 @@ class GameSocket{
                             if (this.adminsList[gameId]) {
                                 const grades = await GradeService.getGradeByGameId(gameId)
                                 const userInfo = {}
-                                if(this.games[gameId].isUserInfo &&  grades.grades)
+                                if(grades && this.games[gameId].isUserInfo &&  grades.grades)
                                     for (const grade in grades.grades) {
                                         userInfo[grade] = await UserInfoService.getInfo(grade)
                                     }
@@ -137,7 +137,7 @@ class GameSocket{
                             if (this.adminsList[gameId]) {
                                 const grades = await GradeService.getGradeByGameId(gameId)
                                 const userInfo = {}
-                                if(this.games[gameId].isUserInfo &&  grades.grades)
+                                if(grades && this.games[gameId].isUserInfo &&  grades.grades)
                                     for (const grade in grades.grades) {
                                         userInfo[grade] = await UserInfoService.getInfo(grade)
                                     }
@@ -182,7 +182,7 @@ class GameSocket{
                             if (this.adminsList[gameId]) {
                                 const grades = await GradeService.getGradeByGameId(gameId)
                                 const userInfo = {}
-                                if(this.games[gameId].isUserInfo &&  grades.grades)
+                                if(grades && this.games[gameId].isUserInfo &&  grades.grades)
                                     for (const grade in grades.grades) {
                                         userInfo[grade] = await UserInfoService.getInfo(grade)
                                     }

@@ -60,7 +60,6 @@ class GradeService{
     async gradePut(grade, gameId, location,  userId){
         // try {
             const gradeDb = await GradeModel.findOne({game:gameId})
-            console.log(gradeDb)
             if(gradeDb){
                 if(!gradeDb.grades[userId])
                     gradeDb.grades[userId] = []

@@ -59,7 +59,6 @@ class GameService{
 
     async createGame(game){
         try {
-            console.log(game)
             if(game.id)
                 delete (game.id)
             const gameFind = await GameModel.findOne({name:game.name})

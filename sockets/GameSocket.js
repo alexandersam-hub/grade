@@ -3,6 +3,7 @@ const GameService = require('../services/games/GameService')
 const UserIdService = require('../services/UserIdService')
 const ProgressService = require('../services/games/ProgressService')
 const GradeService = require('../services/GradeService')
+const UserInfoService = require('../services/users/UserInfoService')
 
 class GameSocket{
 
@@ -62,27 +63,37 @@ class GameSocket{
                                     }
                                     user = newUserId.number
                                 }
-                                const currentLocation = this.games[gameId].locations[this.games[gameId].process.location]
-                                const lastAnswerByLocation = await GradeService.getGradeUserByLocation(gameId, this.games[gameId].process.location, user)
+                                const currentLocation = this.games[gameId].locations[this.games[gameId].process?this.games[gameId].process.location:0]
+                                const lastAnswerByLocation = await GradeService.getGradeUserByLocation(gameId,this.games[gameId].process?this.games[gameId].process.location:0, user)
                                 if(! this.usersList[gameId])
                                     this.usersList[gameId] = []
                                 this.usersList[gameId].push({id:user, ws})
 
                                 return this.sendMessage(ws, {
                                     warning:false,
-                                    gameName:this.games[gameId].name, action: 'login', answer:lastAnswerByLocation,
-                                    location:currentLocation, userId:user, role})
+                                    gameName:this.games[gameId].name,
+                                    action: 'login',
+                                    answer:lastAnswerByLocation,
+                                    isUserInfo:this.games[gameId].isUserInfo && await UserInfoService.isUserInfo(user), location:currentLocation,
+                                    userId:user, role, isAnswer: lastAnswerByLocation && lastAnswerByLocation.length>0
+                                })
 
                             }else{
                                 role = 'admin'
                                 if(! this.adminsList[gameId])
                                     this.adminsList[gameId] = []
                                 const grades = await GradeService.getGradeByGameId(gameId)
+                                const userInfo = {}
+                                if(this.games[gameId].isUserInfo)
+                                    for (const grade in grades.grades) {
+                                        userInfo[grade] = await UserInfoService.getInfo(grade)
+                                    }
                                 user =this.adminsList[gameId].length
                                 this.adminsList[gameId].push({gameId, ws, userId: user})
 
                                 return this.sendMessage(ws, {
                                     warning:false,
+                                    userInfo,
                                     action: 'login',grades,
                                     game:this.games[gameId]})
 
@@ -90,13 +101,18 @@ class GameSocket{
                                 // return ws.send(JSON.stringify({warning: true, action: 'login', message: 'bad token'}))
 
                         case 'putGrade':
-                            await GradeService.gradePut(messageData.grade, gameId, this.games[gameId].locations[this.games[gameId].process.location],this.games[gameId].process.location,messageData.question, user)
+                            await GradeService.gradePut(messageData.grade, gameId, this.games[gameId].process.location, user)
                             this.games[gameId].process.count++
                             if (this.adminsList[gameId]) {
                                 const grades = await GradeService.getGradeByGameId(gameId)
+                                const userInfo = {}
+                                if(this.games[gameId].isUserInfo)
+                                    for (const grade in grades.grades) {
+                                        userInfo[grade] = await UserInfoService.getInfo(grade)
+                                    }
                                 this.adminsList[gameId].forEach(admin => this.sendMessage(admin.ws, {
                                     warning: false,
-                                    grades,
+                                    grades,userInfo,
                                     action: 'login',
                                     game: this.games[gameId]
                                 }))
@@ -109,14 +125,25 @@ class GameSocket{
                                 location:currentLocation,
                                 gameName:this.games[gameId].name, action: 'reportPutGrade'})
 
+                        case 'putUserInfo':
+                            // console.log(messageData)
+                            const res = await UserInfoService.addInfo(user,messageData.age, messageData.gender )
+                            this.sendMessage(ws,{  action: 'reportUserInfo',warning:!res})
+                            return
+
                         case 'nextAnswer':
                             this.games[messageData.gameId].process.location = messageData.numberLocation
                             await ProgressService.setGameProgress(gameId, messageData.numberLocation)
                             if (this.adminsList[gameId]) {
                                 const grades = await GradeService.getGradeByGameId(gameId)
+                                const userInfo = {}
+                                if(this.games[gameId].isUserInfo)
+                                    for (const grade in grades.grades) {
+                                        userInfo[grade] = await UserInfoService.getInfo(grade)
+                                    }
                                 this.adminsList[gameId].forEach(admin => this.sendMessage(admin.ws, {
                                     warning: false,
-                                    grades,
+                                    grades,userInfo,
                                     action: 'login',
                                     game: this.games[gameId]
                                 }))
@@ -127,6 +154,7 @@ class GameSocket{
                                     const lastAnswerByLocation =await GradeService.getGradeUserByLocation(gameId, messageData.numberLocation, u.id)
                                     this.sendMessage(u.ws, {
                                         warning:false,
+                                        isAnswer: lastAnswerByLocation && lastAnswerByLocation.length>0,
                                         gameName:this.games[gameId].name, action: 'login', answer:lastAnswerByLocation,
                                         location:currentLocation, userId:u.id, role:'user'})
                                 }
@@ -153,9 +181,15 @@ class GameSocket{
                             await ProgressService.setGameProgress(gameId, 0)
                             if (this.adminsList[gameId]) {
                                 const grades = await GradeService.getGradeByGameId(gameId)
+                                const userInfo = {}
+                                if(this.games[gameId].isUserInfo)
+                                    for (const grade in grades.grades) {
+                                        userInfo[grade] = await UserInfoService.getInfo(grade)
+                                    }
+
                                 this.adminsList[gameId].forEach(admin => this.sendMessage(admin.ws, {
                                     warning: false,
-                                    grades,
+                                    grades,userInfo,
                                     action: 'login',
                                     game: this.games[gameId]
                                 }))
@@ -177,9 +211,9 @@ class GameSocket{
                     }})
                 ws.on('close', ()=> {
                     if (role === 'admin'){
-                        this.adminsList[gameId] =  this.adminsList[gameId].filter(l=>l.userId !== user)
+                        this.adminsList[gameId] =  this.adminsList[gameId]?this.adminsList[gameId].filter(l=>l.userId !== user):[]
                     }else{
-                        this.usersList[gameId] = this.usersList[gameId].filter(u=>u.id !== user)
+                        this.usersList[gameId] = this.usersList[gameId]?this.usersList[gameId].filter(u=>u.id !== user):[]
                     }
                     // if (game)
                         // if (user.role === 'admin')
@@ -195,6 +229,10 @@ class GameSocket{
 
     sendMessage(ws, data){
         ws.send(JSON.stringify(data))
+    }
+
+    getUserInfo(){
+
     }
 
 }
